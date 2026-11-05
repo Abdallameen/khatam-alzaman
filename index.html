@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>خاتم الزمن — الفصل الأول</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:"Segoe UI",Tahoma,"Noto Naskh Arabic",sans-serif;color:#fff;user-select:none}
+  #c{position:fixed;inset:0;display:block;transition:filter .6s}
+  #c.frozen{filter:grayscale(.85) contrast(1.15) hue-rotate(180deg) brightness(.95)}
+  .layer{position:fixed;inset:0;pointer-events:none}
+  #fade{background:#000;opacity:1;transition:opacity 1.2s}
+  #redflash{background:radial-gradient(transparent 40%,rgba(200,0,0,.65));opacity:0;transition:opacity .25s}
+  #vignette{background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.55))}
+  #frozenfx{background:radial-gradient(ellipse at center,transparent 35%,rgba(60,170,255,.35));opacity:0;transition:opacity .4s}
+  .bar{position:fixed;left:0;right:0;height:0;background:#000;transition:height .8s;z-index:5}
+  #barT{top:0}#barB{bottom:0}
+  body.cine #barT,body.cine #barB{height:11vh}
+  #hud{position:fixed;top:18px;right:22px;width:280px;z-index:6;opacity:0;transition:opacity .6s}
+  #hud.on{opacity:1}
+  .meter{height:12px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.35);border-radius:7px;overflow:hidden;margin-bottom:8px}
+  .meter>div{height:100%;width:100%;transition:width .15s}
+  #hp>div{background:linear-gradient(90deg,#8b0000,#e53935)}
+  #en>div{background:linear-gradient(90deg,#0d47a1,#4fc3f7)}
+  .lbl{font-size:12px;opacity:.8;margin-bottom:3px}
+  #objective{position:fixed;top:18px;left:22px;max-width:40vw;z-index:6;background:rgba(0,0,0,.45);padding:10px 16px;border-right:3px solid #ffca28;border-radius:6px;font-size:16px;opacity:0;transition:opacity .5s}
+  #objective.on{opacity:1}
+  #prompt{position:fixed;bottom:22vh;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);padding:8px 18px;border-radius:20px;font-size:17px;display:none;z-index:6}
+  #dialog{position:fixed;bottom:4vh;left:50%;transform:translateX(-50%);width:min(900px,92vw);background:linear-gradient(180deg,rgba(10,12,20,.88),rgba(5,6,10,.95));border:1px solid rgba(255,215,120,.45);border-radius:10px;padding:18px 26px 26px;z-index:9;display:none;box-shadow:0 0 40px rgba(0,0,0,.6)}
+  #dname{color:#ffca28;font-weight:bold;font-size:19px;margin-bottom:8px}
+  #dtext{font-size:22px;line-height:1.7;min-height:2.2em}
+  #dnext{position:absolute;left:18px;bottom:8px;font-size:13px;opacity:.6;animation:blink 1s infinite}
+  @keyframes blink{50%{opacity:.15}}
+  #cards{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:16;background:#000;padding:8vw}
+  #ctext{font-size:clamp(20px,2.6vw,34px);line-height:1.9;text-align:center;max-width:1000px;opacity:0;transition:opacity .9s;white-space:pre-line}
+  #cnext{position:fixed;bottom:5vh;left:50%;transform:translateX(-50%);opacity:.5;font-size:14px}
+  #title{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#14203a 0%,#000 75%)}
+  #title h1{font-size:clamp(48px,9vw,120px);letter-spacing:4px;background:linear-gradient(180deg,#fff6d5,#d4a236 60%,#7a5410);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 50px rgba(255,200,80,.25)}
+  #title h2{font-weight:normal;opacity:.75;margin:10px 0 50px;font-size:clamp(16px,2vw,24px)}
+  #title .start{font-size:22px;animation:blink 1.6s infinite}
+  #title .ctrl{position:absolute;bottom:4vh;font-size:14px;opacity:.6;text-align:center;line-height:1.9}
+  .ring{width:110px;height:110px;border-radius:50%;border:6px solid #d4a236;box-shadow:0 0 30px #ffcc55,inset 0 0 25px #ffcc55;margin-bottom:30px;animation:spin 6s linear infinite}
+  @keyframes spin{to{transform:rotateY(360deg)}}
+  #big{position:fixed;top:38%;left:50%;transform:translate(-50%,-50%) scale(.9);font-size:clamp(28px,5vw,64px);font-weight:bold;color:#bfe9ff;text-shadow:0 0 30px #29b6f6,0 0 60px #0277bd;opacity:0;transition:all .8s;z-index:8;text-align:center}
+  #big.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  #help{position:fixed;bottom:16px;right:22px;font-size:13px;opacity:.75;z-index:6;background:rgba(0,0,0,.4);padding:8px 12px;border-radius:6px;line-height:1.7;display:none}
+  .ehp{position:fixed;width:70px;height:7px;background:rgba(0,0,0,.6);border:1px solid #000;transform:translate(-50%,-50%);z-index:4}
+  .ehp>div{height:100%;background:#e53935}
+  /* تحكم اللمس */
+  #touch{position:fixed;inset:0;z-index:7;display:none;touch-action:none}
+  body.touch #touch{display:block}
+  #joy{position:fixed;left:6vw;bottom:8vh;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.35)}
+  #knob{position:absolute;left:40px;top:40px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.55)}
+  .tb{position:fixed;width:66px;height:66px;border-radius:50%;background:rgba(0,0,0,.45);border:2px solid rgba(255,255,255,.5);color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.1}
+  .tb.down{background:rgba(255,202,40,.55)}
+  #bAtk{right:6vw;bottom:10vh;width:84px;height:84px;font-size:18px}
+  #bDodge{right:calc(6vw + 96px);bottom:7vh}
+  #bTime{right:calc(6vw + 10px);bottom:calc(10vh + 96px);border-color:#4fc3f7}
+  #bAct{right:calc(6vw + 96px);bottom:calc(7vh + 82px)}
+  body.touch #help{display:none!important}
+  body.touch #hud{width:180px;top:10px;right:12px}
+  body.touch #objective{top:10px;left:12px;font-size:13px;max-width:55vw}
+  body.touch #dtext{font-size:17px}
+  body.touch #dialog{bottom:2vh;z-index:9}
+</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
+</head>
+<body>
+<div class="layer" id="vignette"></div>
+<div class="layer" id="frozenfx"></div>
+<div class="layer" id="redflash"></div>
+<div class="bar" id="barT"></div><div class="bar" id="barB"></div>
+<div id="hud">
+  <div class="lbl">الحياة</div><div class="meter" id="hp"><div></div></div>
+  <div class="lbl">طاقة الزمن ⏳</div><div class="meter" id="en"><div></div></div>
+</div>
+<div id="objective"></div>
+<div id="prompt"></div>
+<div id="big"></div>
+<div id="help"></div>
+<div id="touch">
+  <div id="joy"><div id="knob"></div></div>
+  <div class="tb" id="bAtk" data-a="attack">⚔️<br>هجوم</div>
+  <div class="tb" id="bDodge" data-a="dodge">💨<br>تفادي</div>
+  <div class="tb" id="bTime" data-a="time">⏳<br>زمن</div>
+  <div class="tb" id="bAct" data-a="interact">✋<br>تفاعل</div>
+</div>
+<div id="dialog"><div id="dname"></div><div id="dtext"></div><div id="dnext">▼ متابعة</div></div>
+<div id="cards"><div id="ctext"></div><div id="cnext">اضغط للمتابعة</div></div>
+<div class="layer" id="fade" style="z-index:15"></div>
+<div id="title">
+  <div class="ring"></div>
+  <h1>خاتم الزمن</h1>
+  <h2>الفصل الأول: الساعة بسنة</h2>
+  <div class="start">اضغط أي زر للبدء</div>
+  <div class="ctrl">🎮 يد تحكم مدعومة — أو لوحة المفاتيح والفأرة<br>يُفضّل اللعب بملء الشاشة (F11)</div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+
+/* ================= أدوات عامة ================= */
+const $ = id => document.getElementById(id);
+const wait = s => new Promise(r => setTimeout(r, s * 1000));
+const rand = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0 && matchMedia('(pointer:coarse)').matches;
+if (isTouch) document.body.classList.add('touch');
+
+/* ================= الصوت ================= */
+let ac = null;
+function audio() { if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); return ac; }
+function tone(f, d, type = 'sine', v = .12, slide = 0) {
+  const a = audio(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.value = f;
+  if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(20, f * slide), a.currentTime + d);
+  g.gain.setValueAtTime(v, a.currentTime); g.gain.exponentialRampToValueAtTime(.0008, a.currentTime + d);
+  o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + d);
+}
+function noise(d = .15, v = .2, hp = 1500) {
+  const a = audio(), b = a.createBuffer(1, a.sampleRate * d, a.sampleRate), ch = b.getChannelData(0);
+  for (let i = 0; i < ch.length; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / ch.length);
+  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  f.type = 'highpass'; f.frequency.value = hp; g.gain.value = v;
+  s.buffer = b; s.connect(f).connect(g).connect(a.destination); s.start();
+}
+const sfx = {
+  clash() { noise(.25, .3, 2500); tone(1800, .3, 'square', .04, .5); },
+  hit() { noise(.12, .3, 400); tone(160, .15, 'sawtooth', .1, .4); },
+  swing() { noise(.12, .12, 3000); },
+  hurt() { tone(220, .25, 'sawtooth', .12, .5); },
+  time() { tone(900, 1.4, 'sine', .15, .08); tone(450, 1.6, 'triangle', .1, .1); },
+  unfreeze() { tone(80, .7, 'sine', .15, 8); },
+  blip() { tone(700, .04, 'square', .02); },
+  dash() { noise(.18, .1, 800); },
+  arrow() { tone(1200, .2, 'triangle', .05, .3); },
+  magic() { tone(500, .9, 'sine', .1, 3); tone(750, .9, 'sine', .07, 2); },
+};
+
+/* ================= المشهد ================= */
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch ? 1.25 : 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.domElement.id = 'c';
+document.body.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+const SKY = new THREE.Color(0xa9cfe8);
+scene.background = SKY.clone();
+scene.fog = new THREE.Fog(SKY.clone(), 35, 190);
+const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, .1, 600);
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+
+scene.add(new THREE.HemisphereLight(0xe3f1ff, 0x48602c, 1.0));
+const sun = new THREE.DirectionalLight(0xfff0cc, 2.2);
+sun.castShadow = true; sun.shadow.mapSize.set(isTouch ? 1024 : 2048, isTouch ? 1024 : 2048);
+Object.assign(sun.shadow.camera, { left: -45, right: 45, top: 45, bottom: -45, far: 200 });
+sun.shadow.bias = -0.0005;
+scene.add(sun, sun.target);
+
+const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: .85, ...o });
+
+// الأرض
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), M(0x5f8f3c));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+// طريق ترابي نحو الغابة
+const path = new THREE.Mesh(new THREE.PlaneGeometry(4, 60), M(0x8a7652));
+path.rotation.x = -Math.PI / 2; path.position.set(0, .02, -30); path.receiveShadow = true; scene.add(path);
+
+// عشب
+{
+  const geo = new THREE.ConeGeometry(.08, .5, 3); geo.translate(0, .25, 0);
+  const n = isTouch ? 2500 : 6000, inst = new THREE.InstancedMesh(geo, M(0x6fa544), n), d = new THREE.Object3D();
+  for (let i = 0; i < n; i++) {
+    d.position.set(rand(-120, 120), 0, rand(-130, 60)); d.rotation.set(rand(-.3, .3), rand(0, 6), rand(-.3, .3));
+    d.scale.setScalar(rand(.6, 1.6)); d.updateMatrix(); inst.setMatrixAt(i, d.matrix);
+  }
+  scene.add(inst);
+}
+
+// الأشجار (Instanced) + تصادم
+const colliders = []; // {x,z,r}
+const CLEAR = new THREE.Vector3(0, 0, -72); // مركز فسحة الغابة
+{
+  const pts = [];
+  for (let i = 0; i < 320; i++) { const a = rand(0, Math.PI * 2), r = rand(14, 55); const x = CLEAR.x + Math.cos(a) * r, z = CLEAR.z + Math.sin(a) * r; if (z > -46 && Math.abs(x) < 4) continue; pts.push([x, z, rand(.8, 1.5)]); }
+  for (let i = 0; i < 110; i++) { const x = rand(-110, 110), z = rand(-40, 55); if (Math.hypot(x, z) < 18 || Math.abs(x) < 5 || Math.hypot(x - 9, z + 6) < 9) continue; pts.push([x, z, rand(.8, 1.4)]); }
+  const tg = new THREE.CylinderGeometry(.25, .4, 3, 7); tg.translate(0, 1.5, 0);
+  const l1 = new THREE.ConeGeometry(2, 4, 8); l1.translate(0, 4.5, 0);
+  const l2 = new THREE.ConeGeometry(1.5, 3, 8); l2.translate(0, 6.3, 0);
+  const trunks = new THREE.InstancedMesh(tg, M(0x5b3d24), pts.length);
+  const leaf1 = new THREE.InstancedMesh(l1, M(0x2f6b2a), pts.length);
+  const leaf2 = new THREE.InstancedMesh(l2, M(0x3c7f33), pts.length);
+  [trunks, leaf1, leaf2].forEach(m => { m.castShadow = true; m.receiveShadow = true; scene.add(m); });
+  const d = new THREE.Object3D();
+  pts.forEach(([x, z, s], i) => {
+    d.position.set(x, 0, z); d.rotation.y = rand(0, 6); d.scale.set(s, s * rand(.9, 1.3), s); d.updateMatrix();
+    trunks.setMatrixAt(i, d.matrix); leaf1.setMatrixAt(i, d.matrix); leaf2.setMatrixAt(i, d.matrix);
+    colliders.push({ x, z, r: .55 * s + .4 });
+  });
+}
+// الجبال
+for (let i = 0; i < 26; i++) {
+  const a = i / 26 * Math.PI * 2 + rand(-.1, .1), r = rand(170, 220), h = rand(45, 95);
+  const m = new THREE.Mesh(new THREE.ConeGeometry(rand(30, 50), h, 7), M(0x6c7a6a, { flatShading: true }));
+  m.position.set(Math.cos(a) * r, h / 2 - 2, Math.sin(a) * r); scene.add(m);
+  const cap = new THREE.Mesh(new THREE.ConeGeometry(m.geometry.parameters.radius * .3, h * .3, 7), M(0xf2f6f8, { flatShading: true }));
+  cap.position.copy(m.position); cap.position.y = h - 2 - h * .15; scene.add(cap);
+}
+// صخور
+for (let i = 0; i < 40; i++) {
+  const r = new THREE.Mesh(new THREE.DodecahedronGeometry(rand(.4, 1.3)), M(0x8b8f93, { flatShading: true }));
+  const a = rand(0, 6.28), d = rand(6, 40); r.position.set(CLEAR.x + Math.cos(a) * d, .2, CLEAR.z + Math.sin(a) * d);
+  if (Math.abs(r.position.x) < 3 && r.position.z > CLEAR.z) continue;
+  r.castShadow = r.receiveShadow = true; scene.add(r);
+}
+// البيت القديم
+{
+  const h = new THREE.Group(); h.position.set(10, 0, -7); h.rotation.y = -.4;
+  const walls = new THREE.Mesh(new THREE.BoxGeometry(7, 4, 6), M(0x9b7a55)); walls.position.y = 2;
+  const base = new THREE.Mesh(new THREE.BoxGeometry(7.4, 1, 6.4), M(0x7d7d7d, { flatShading: true })); base.position.y = .5;
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(5.8, 3, 4), M(0x6b2f22)); roof.position.y = 5.5; roof.rotation.y = Math.PI / 4; roof.scale.z = .85;
+  const door = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.2, .1), M(0x3e2716)); door.position.set(0, 1.1, 3.02);
+  const winM = M(0xffe7a0, { emissive: 0xffc04d, emissiveIntensity: .6 });
+  const w1 = new THREE.Mesh(new THREE.BoxGeometry(1, .8, .1), winM); w1.position.set(-2.2, 2.4, 3.02);
+  const w2 = w1.clone(); w2.position.x = 2.2;
+  [walls, base, roof].forEach(m => { m.castShadow = m.receiveShadow = true; });
+  h.add(walls, base, roof, door, w1, w2); scene.add(h);
+  colliders.push({ x: 10, z: -7, r: 4.8 });
+}
+// الحفرة
+const PIT = new THREE.Vector3(5, 0, -75);
+{
+  const p = new THREE.Mesh(new THREE.CircleGeometry(1.6, 24), new THREE.MeshBasicMaterial({ color: 0x0b0805 }));
+  p.rotation.x = -Math.PI / 2; p.position.copy(PIT); p.position.y = .03; scene.add(p);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(1.7, .25, 6, 24), M(0x5a4630)); rim.rotation.x = -Math.PI / 2; rim.position.copy(PIT); rim.position.y = .05; scene.add(rim);
+}
+// علامة الهدف
+const marker = new THREE.Mesh(new THREE.CylinderGeometry(.6, .6, 40, 16, 1, true),
+  new THREE.MeshBasicMaterial({ color: 0xffd54f, transparent: true, opacity: .25, depthWrite: false, side: THREE.DoubleSide }));
+marker.visible = false; scene.add(marker);
+
+/* ================= الشخصيات ================= */
+function makeHuman({ skin = 0xe0b18a, shirt = 0x445566, pants = 0x2f2f35, hair = 0x2b1d14, scale = 1 } = {}) {
+  const g = new THREE.Group();
+  const mats = { skin: M(skin), shirt: M(shirt), pants: M(pants), hair: M(hair) };
+  const mesh = (geo, mat, y) => { const m = new THREE.Mesh(geo, mat); m.position.y = y; m.castShadow = true; return m; };
+  const torso = mesh(new THREE.BoxGeometry(.7, .85, .4), mats.shirt, 1.27);
+  const head = mesh(new THREE.SphereGeometry(.26, 16, 12), mats.skin, 1.94);
+  const hairM = mesh(new THREE.SphereGeometry(.28, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), mats.hair, 1.97);
+  const limb = (w, h, mat) => { const p = new THREE.Group(); const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), mat); m.position.y = -h / 2; m.castShadow = true; p.add(m); return p; };
+  const armL = limb(.2, .8, mats.shirt), armR = limb(.2, .8, mats.shirt);
+  armL.position.set(.47, 1.66, 0); armR.position.set(-.47, 1.66, 0);
+  const legL = limb(.26, .85, mats.pants), legR = limb(.26, .85, mats.pants);
+  legL.position.set(.18, .86, 0); legR.position.set(-.18, .86, 0);
+  g.add(torso, head, hairM, armL, armR, legL, legR);
+  g.scale.setScalar(scale);
+  g.userData = { armL, armR, legL, legR, head, torso, phase: rand(0, 6), mats, target: null, speed: 3.5, busy: 0, onArrive: null };
+  return g;
+}
+function animHuman(h, speed, dt) {
+  const u = h.userData; u.phase += dt * (2 + speed * 2.4);
+  const amp = Math.min(speed / 4, 1) * .8, s = Math.sin(u.phase) * amp;
+  u.legL.rotation.x = s; u.legR.rotation.x = -s;
+  if (u.busy <= 0) { u.armL.rotation.x = -s * .8; u.armR.rotation.x = s * .8; }
+  u.torso.position.y = 1.27 + Math.abs(Math.cos(u.phase)) * amp * .05;
+}
+const addTo = (parent, geo, mat, pos, rot) => { const m = new THREE.Mesh(geo, mat); m.position.set(...pos); if (rot) m.rotation.set(...rot); m.castShadow = true; parent.add(m); return m; };
+
+// راضي (اللاعب)
+const player = makeHuman({ shirt: 0x2c3e50, pants: 0x1f2a36, hair: 0x1a120c });
+scene.add(player);
+const ringMat = new THREE.MeshStandardMaterial({ color: 0xd4a236, emissive: 0xffb300, emissiveIntensity: .6, metalness: .9, roughness: .2 });
+const ring = addTo(player.userData.armL, new THREE.TorusGeometry(.09, .03, 8, 16), ringMat, [0, -.82, 0], [Math.PI / 2, 0, 0]);
+const ringLight = new THREE.PointLight(0xffb300, 0, 4); ring.add(ringLight);
+// سيف الزمن (يظهر بعد الاستيقاظ)
+const bladeMat = new THREE.MeshStandardMaterial({ color: 0xbfe9ff, emissive: 0x29b6f6, emissiveIntensity: 1.6, transparent: true, opacity: .9 });
+const blade = new THREE.Group();
+addTo(blade, new THREE.BoxGeometry(.08, .08, 1.3), bladeMat, [0, 0, .75]);
+addTo(blade, new THREE.BoxGeometry(.4, .06, .06), M(0x37474f, { metalness: .8 }), [0, 0, .08]);
+blade.position.set(0, -.8, 0); blade.visible = false; player.userData.armR.add(blade);
+
+// خالد
+const khaled = makeHuman({ shirt: 0x7b1f1f, pants: 0x2a2320, hair: 0x3a2a1a, skin: 0xd9a77e });
+addTo(khaled, new THREE.BoxGeometry(.8, 1.3, .08), M(0x3b1414), [0, 1.05, -.25]); // عباءة
+khaled.visible = false; scene.add(khaled);
+const khaledShield = addTo(khaled.userData.armL, new THREE.CylinderGeometry(.55, .55, .08, 6), new THREE.MeshStandardMaterial({ color: 0x80deea, emissive: 0x00bcd4, emissiveIntensity: 1.5, transparent: true, opacity: .7 }), [.15, -.7, .2], [0, 0, Math.PI / 2]);
+khaledShield.visible = false;
+const khaledSpear = addTo(khaled.userData.armR, new THREE.CylinderGeometry(.04, .04, 2.6, 6), new THREE.MeshStandardMaterial({ color: 0xffe082, emissive: 0xffab00, emissiveIntensity: 1.2 }), [0, -.8, .6], [Math.PI / 2, 0, 0]);
+khaledSpear.visible = false;
+
+// القرويون
+const villagers = [];
+function spawnVillagers() {
+  const shirts = [0x8d6e63, 0xa1887f, 0x6d4c41, 0x9e9d24, 0x5d4037, 0x795548, 0x827717, 0xbcaaa4];
+  for (let i = 0; i < 22; i++) {
+    const v = makeHuman({ shirt: shirts[i % shirts.length], pants: 0x4e342e, hair: [0x2b1d14, 0x5d4037, 0x111111, 0x9e9e9e][i % 4], skin: [0xe0b18a, 0xc68c5e, 0xf1c9a5][i % 3], scale: rand(.9, 1.05) });
+    const a = i / 22 * Math.PI * 2 + rand(-.1, .1), r = rand(4, 7.5);
+    v.position.set(Math.cos(a) * r, 0, Math.sin(a) * r);
+    v.lookAt(0, 0, 0);
+    if (i % 3 === 0) addTo(v.userData.armR, new THREE.CylinderGeometry(.04, .04, 1.8, 5), M(0x6d4c41), [0, -.8, 0]); // أداة زراعية
+    scene.add(v); villagers.push(v);
+  }
+}
+
+// الحراس
+const enemies = [];
+function spawnGuard(type, x, z) {
+  const h = makeHuman({ shirt: 0x5f6670, pants: 0x30343b, hair: 0x222222, skin: 0xc99a74, scale: 1.08 });
+  const steel = M(0x9aa3ad, { metalness: .8, roughness: .35 });
+  addTo(h, new THREE.CylinderGeometry(.29, .3, .3, 10), steel, [0, 2.05, 0]); // خوذة
+  addTo(h, new THREE.BoxGeometry(.78, .5, .46), steel, [0, 1.48, 0]); // درع صدر
+  addTo(h, new THREE.BoxGeometry(.06, .5, .02), M(0xb71c1c), [0, 1.3, .24]); // شعار
+  if (type === 'sword') {
+    addTo(h.userData.armR, new THREE.BoxGeometry(.08, .08, 1.2), steel, [0, -.8, .55]);
+    addTo(h.userData.armL, new THREE.BoxGeometry(.08, .8, .6), M(0x6d4c41), [.12, -.6, .1]);
+  } else {
+    addTo(h.userData.armL, new THREE.TorusGeometry(.6, .03, 6, 16, Math.PI), M(0x5d4037), [0, -.8, .2], [0, Math.PI / 2, Math.PI / 2]);
+  }
+  h.position.set(x, 0, z); scene.add(h);
+  const bar = document.createElement('div'); bar.className = 'ehp'; bar.innerHTML = '<div></div>'; bar.style.display = 'none'; document.body.appendChild(bar);
+  const e = { h, type, hp: type === 'sword' ? 120 : 70, max: type === 'sword' ? 120 : 70, state: 'idle', t: 0, cd: 2, alive: true, flash: 0, bar, strafe: Math.random() < .5 ? 1 : -1, kb: new THREE.Vector3() };
+  enemies.push(e); return e;
+}
+
+/* ================= المؤثرات ================= */
+const fx = [];
+function dissolve(obj, color = 0xffe082, count = 400) {
+  const geo = new THREE.BufferGeometry(), p = new Float32Array(count * 3), v = [];
+  for (let i = 0; i < count; i++) {
+    p[i * 3] = obj.position.x + rand(-.4, .4); p[i * 3 + 1] = rand(0, 2.1); p[i * 3 + 2] = obj.position.z + rand(-.4, .4);
+    v.push(rand(-.6, .6), rand(.5, 2.2), rand(-.6, .6));
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(p, 3));
+  const mat = new THREE.PointsMaterial({ color, size: .09, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+  const pts = new THREE.Points(geo, mat); scene.add(pts);
+  let life = 3.2, hidden = false, t = 0;
+  fx.push({
+    update(dt) {
+      t += dt; life -= dt;
+      if (!hidden && t > .9) { obj.visible = false; hidden = true; }
+      if (!hidden) obj.scale.setScalar(obj.scale.x * (1 - dt * .3));
+      for (let i = 0; i < count; i++) { p[i * 3] += v[i * 3] * dt; p[i * 3 + 1] += v[i * 3 + 1] * dt; p[i * 3 + 2] += v[i * 3 + 2] * dt; }
+      geo.attributes.position.needsUpdate = true; mat.opacity = clamp(life / 2, 0, 1);
+      if (life <= 0) { scene.remove(pts); geo.dispose(); return false; } return true;
+    }
+  });
+}
+function sparks(pos, color = 0xffd180, n = 30) {
+  const geo = new THREE.BufferGeometry(), p = new Float32Array(n * 3), v = [];
+  for (let i = 0; i < n; i++) { p.set([pos.x, pos.y, pos.z], i * 3); v.push(rand(-5, 5), rand(1, 6), rand(-5, 5)); }
+  geo.setAttribute('position', new THREE.BufferAttribute(p, 3));
+  const mat = new THREE.PointsMaterial({ color, size: .12, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+  const pts = new THREE.Points(geo, mat); scene.add(pts); let life = .5;
+  fx.push({ update(dt) { life -= dt; for (let i = 0; i < n; i++) { v[i * 3 + 1] -= 15 * dt; p[i * 3] += v[i * 3] * dt; p[i * 3 + 1] += v[i * 3 + 1] * dt; p[i * 3 + 2] += v[i * 3 + 2] * dt; } geo.attributes.position.needsUpdate = true; mat.opacity = life * 2; if (life <= 0) { scene.remove(pts); return false; } return true; } });
+}
+// أوراق متساقطة في الغابة (تتجمد مع الزمن)
+const LEAVES = 500;
+const leafGeo = new THREE.BufferGeometry(), leafP = new Float32Array(LEAVES * 3), leafV = [];
+for (let i = 0; i < LEAVES; i++) { leafP.set([CLEAR.x + rand(-30, 30), rand(0, 12), CLEAR.z + rand(-30, 30)], i * 3); leafV.push(rand(.3, 1), rand(0, 6)); }
+leafGeo.setAttribute('position', new THREE.BufferAttribute(leafP, 3));
+scene.add(new THREE.Points(leafGeo, new THREE.PointsMaterial({ color: 0xc0ca33, size: .16 })));
+function updateLeaves(dt) {
+  for (let i = 0; i < LEAVES; i++) {
+    leafV[i * 2 + 1] += dt; leafP[i * 3 + 1] -= leafV[i * 2] * dt; leafP[i * 3] += Math.sin(leafV[i * 2 + 1]) * dt * .8;
+    if (leafP[i * 3 + 1] < 0) leafP[i * 3 + 1] = 12;
+  }
+  leafGeo.attributes.position.needsUpdate = true;
+}
+const arrows = [];
+function shootArrow(from, to) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, .9, 5), M(0x4e342e)); m.geometry.rotateX(Math.PI / 2);
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(.06, .18, 5), M(0xb0bec5)); tip.rotation.x = Math.PI / 2; tip.position.z = .5; m.add(tip);
+  m.position.copy(from); const dir = to.clone().sub(from).normalize(); m.lookAt(to);
+  scene.add(m); arrows.push({ m, vel: dir.multiplyScalar(20), life: 3 }); sfx.arrow();
+}
+
+/* ================= الإدخال (لوحة مفاتيح + فأرة + يد تحكم) ================= */
+const keys = new Set(); let mouseDX = 0, mouseDY = 0, clickFlag = false, anyFlag = false;
+addEventListener('keydown', e => { keys.add(e.code); anyFlag = true; if (['Space', 'Tab'].includes(e.code)) e.preventDefault(); });
+addEventListener('keyup', e => keys.delete(e.code));
+addEventListener('mousedown', e => { if (isTouch) return; if (e.button === 0) clickFlag = true; anyFlag = true; if (mode === 'play' && document.pointerLockElement !== renderer.domElement) renderer.domElement.requestPointerLock?.(); });
+// ---- اللمس ----
+const touchBtns = new Set(); const joy = { id: null, x: 0, y: 0, cx: 0, cy: 0 }; let camTouch = null, tapFlag = false;
+document.getElementById('touch').addEventListener('touchstart', e => {
+  e.preventDefault(); audio(); anyFlag = true;
+  for (const t of e.changedTouches) {
+    const btn = t.target.closest('.tb');
+    if (btn) { touchBtns.add(btn.dataset.a); btn.classList.add('down'); btn._tid = t.identifier; continue; }
+    if (t.clientX < innerWidth * .45 && joy.id === null && mode === 'play') { joy.id = t.identifier; joy.cx = t.clientX; joy.cy = t.clientY; joy.x = joy.y = 0; }
+    else if (!camTouch) camTouch = { id: t.identifier, x: t.clientX, y: t.clientY, sx: t.clientX, sy: t.clientY };
+  }
+}, { passive: false });
+document.getElementById('touch').addEventListener('touchmove', e => {
+  e.preventDefault();
+  for (const t of e.changedTouches) {
+    if (t.identifier === joy.id) {
+      let dx = t.clientX - joy.cx, dy = t.clientY - joy.cy; const L = Math.hypot(dx, dy), R = 55;
+      if (L > R) { dx *= R / L; dy *= R / L; }
+      joy.x = dx / R; joy.y = dy / R; $('knob').style.transform = `translate(${dx}px,${dy}px)`;
+    } else if (camTouch && t.identifier === camTouch.id) { mouseDX += (t.clientX - camTouch.x) * 1.6; mouseDY += (t.clientY - camTouch.y) * 1.6; camTouch.x = t.clientX; camTouch.y = t.clientY; }
+  }
+}, { passive: false });
+const touchEnd = e => {
+  for (const t of e.changedTouches) {
+    document.querySelectorAll('.tb').forEach(b => { if (b._tid === t.identifier) { touchBtns.delete(b.dataset.a); b.classList.remove('down'); b._tid = null; } });
+    if (t.identifier === joy.id) { joy.id = null; joy.x = joy.y = 0; $('knob').style.transform = ''; }
+    if (camTouch && t.identifier === camTouch.id) { if (Math.hypot(t.clientX - camTouch.sx, t.clientY - camTouch.sy) < 12) tapFlag = true; camTouch = null; }
+  }
+};
+document.getElementById('touch').addEventListener('touchend', touchEnd);
+document.getElementById('touch').addEventListener('touchcancel', touchEnd);
+// خارج وضع اللعب (العنوان/المقدمة/الحوار): أي لمسة = متابعة
+addEventListener('touchstart', e => { if (!e.target.closest('#touch')) { audio(); anyFlag = true; tapFlag = true; } }, { passive: true });
+addEventListener('mousemove', e => { if (document.pointerLockElement === renderer.domElement) { mouseDX += e.movementX; mouseDY += e.movementY; } });
+let prevAct = {}, act = {}, pressed = {}, gpConnected = false;
+addEventListener('gamepadconnected', () => { gpConnected = true; updateHelp(); });
+function pollInput() {
+  const gp = [...(navigator.getGamepads?.() || [])].find(g => g);
+  const b = i => !!(gp && gp.buttons[i] && gp.buttons[i].pressed);
+  const dz = v => Math.abs(v) < .18 ? 0 : v;
+  let mx = 0, my = 0;
+  if (keys.has('KeyW') || keys.has('ArrowUp')) my += 1;
+  if (keys.has('KeyS') || keys.has('ArrowDown')) my -= 1;
+  if (keys.has('KeyD') || keys.has('ArrowRight')) mx += 1;
+  if (keys.has('KeyA') || keys.has('ArrowLeft')) mx -= 1;
+  let cx = 0, cy = 0;
+  if (gp) { mx += dz(gp.axes[0]); my -= dz(gp.axes[1]); cx = dz(gp.axes[2] || 0); cy = dz(gp.axes[3] || 0); if (gp.buttons.some(x => x.pressed)) anyFlag = true; }
+  mx += joy.x; my -= joy.y;
+  const len = Math.hypot(mx, my); if (len > 1) { mx /= len; my /= len; }
+  act = {
+    interact: keys.has('KeyE') || keys.has('Enter') || b(0),
+    attack: keys.has('KeyJ') || clickFlag || b(2) || b(7),
+    dodge: keys.has('Space') || keys.has('ShiftLeft') || b(1) || b(6),
+    time: keys.has('KeyQ') || b(3),
+    lock: keys.has('KeyF') || b(11) || b(5),
+  };
+  for (const a of touchBtns) act[a] = true;
+  pressed = {}; for (const k in act) pressed[k] = act[k] && !prevAct[k];
+  if (clickFlag) pressed.attack = true;
+  if (tapFlag) pressed.interact = true;
+  prevAct = { ...act }; clickFlag = false; tapFlag = false;
+  const r = { mx, my, cx, cy, any: anyFlag }; anyFlag = false; return r;
+}
+function updateHelp() {
+  const h = $('help');
+  h.innerHTML = gpConnected
+    ? '🎮 العصا اليسرى: حركة · اليمنى: كاميرا · A: تفاعل · X/RT: هجوم · B/LT: تفادي · Y: إيقاف الزمن'
+    : '⌨️ WASD: حركة · الفأرة: كاميرا · E: تفاعل · نقرة/J: هجوم · Space: تفادي · Q: إيقاف الزمن';
+}
+updateHelp();
+
+/* ================= واجهة القصة ================= */
+let mode = 'title'; // title | cards | cut | play
+let dlg = null, cardState = null;
+const waiters = [];
+const until = check => new Promise(res => waiters.push({ check, res }));
+function say(lines) {
+  return new Promise(res => { dlg = { lines, i: 0, shown: 0, res }; $('dialog').style.display = 'block'; showLine(); });
+}
+function showLine() { const l = dlg.lines[dlg.i]; $('dname').textContent = l.n || ''; $('dname').style.display = l.n ? 'block' : 'none'; $('dtext').style.fontStyle = l.n ? 'normal' : 'italic'; dlg.shown = 0; $('dtext').textContent = ''; }
+function updateDialog(dt, adv) {
+  if (!dlg) return;
+  const full = dlg.lines[dlg.i].t;
+  if (dlg.shown < full.length) { const prev = Math.floor(dlg.shown); dlg.shown += dt * 45; if (Math.floor(dlg.shown) > prev && prev % 3 === 0) sfx.blip(); $('dtext').textContent = full.slice(0, Math.floor(dlg.shown)); }
+  if (adv) {
+    if (dlg.shown < full.length) { dlg.shown = full.length; $('dtext').textContent = full; }
+    else if (++dlg.i < dlg.lines.length) showLine();
+    else { $('dialog').style.display = 'none'; const r = dlg.res; dlg = null; r(); }
+  }
+}
+function cards(list) {
+  return new Promise(async res => {
+    $('cards').style.display = 'flex'; cardState = { list, i: 0, res, ready: false };
+    $('ctext').textContent = list[0]; await wait(.05); $('ctext').style.opacity = 1; await wait(.6); cardState.ready = true;
+  });
+}
+async function advanceCard() {
+  if (!cardState || !cardState.ready) return; cardState.ready = false;
+  $('ctext').style.opacity = 0; await wait(.9);
+  if (++cardState.i < cardState.list.length) { $('ctext').textContent = cardState.list[cardState.i]; $('ctext').style.opacity = 1; await wait(.6); cardState.ready = true; }
+  else { $('cards').style.display = 'none'; const r = cardState.res; cardState = null; r(); }
+}
+const fade = async (to, t = 1.2) => { $('fade').style.transition = `opacity ${t}s`; $('fade').style.opacity = to; await wait(t); };
+const objective = t => { $('objective').textContent = t ? '◆ ' + t : ''; $('objective').classList.toggle('on', !!t); };
+const cine = on => document.body.classList.toggle('cine', on);
+async function bigText(t, s = 2.5) { $('big').textContent = t; $('big').classList.add('on'); await wait(s); $('big').classList.remove('on'); }
+
+/* ================= حالة اللعب ================= */
+let camYaw = 0, camPitch = .35, camDist = 7, shake = 0;
+const camTarget = new THREE.Vector3();
+let combat = false, awakened = false;
+let hp = 100, energy = 100, timeStop = 0, atkCd = 0, atkT = 0, dodgeT = 0, dodgeCd = 0, invuln = 0;
+const dodgeDir = new THREE.Vector3();
+let interactable = null;
+function setInteract(obj, label) { return new Promise(res => { interactable = { obj, label, res }; }); }
+
+function moveNPC(h, dt) {
+  const u = h.userData; if (!u.target) return 0;
+  const d = new THREE.Vector3(u.target.x - h.position.x, 0, u.target.z - h.position.z), L = d.length();
+  if (L < .3) { u.target = null; const f = u.onArrive; u.onArrive = null; f && f(); return 0; }
+  d.normalize(); h.position.addScaledVector(d, Math.min(u.speed * dt, L));
+  h.rotation.y = Math.atan2(d.x, d.z); return u.speed;
+}
+function collide(pos, r = .45) {
+  for (const c of colliders) { const dx = pos.x - c.x, dz = pos.z - c.z, d = Math.hypot(dx, dz), m = c.r + r; if (d < m && d > 0) { pos.x = c.x + dx / d * m; pos.z = c.z + dz / d * m; } }
+  const L = Math.hypot(pos.x, pos.z + 30); if (L > 150) { pos.x *= 150 / L; }
+}
+function damagePlayer(d, from) {
+  if (invuln > 0 || hp <= 0) return;
+  hp = Math.max(0, hp - d); invuln = .5; shake = .35; sfx.hurt();
+  $('redflash').style.opacity = 1; setTimeout(() => $('redflash').style.opacity = 0, 180);
+  if (from) { const k = player.position.clone().sub(from).setY(0).normalize(); player.position.addScaledVector(k, .8); }
+  if (hp <= 0) playerDown();
+}
+function setFrozen(on) { renderer.domElement.classList.toggle('frozen', on); $('frozenfx').style.opacity = on ? 1 : 0; }
+
+/* ================= القتال ================= */
+function nearestEnemy(maxD) {
+  let best = null, bd = maxD;
+  for (const e of enemies) if (e.alive) { const d = e.h.position.distanceTo(player.position); if (d < bd) { bd = d; best = e; } }
+  return best;
+}
+function playerAttack() {
+  if (atkCd > 0 || dodgeT > 0) return;
+  atkCd = .42; atkT = .3; sfx.swing();
+  const tgt = nearestEnemy(4.5);
+  if (tgt) { const d = tgt.h.position.clone().sub(player.position); player.rotation.y = Math.atan2(d.x, d.z); }
+  const fwd = new THREE.Vector3(Math.sin(player.rotation.y), 0, Math.cos(player.rotation.y));
+  for (const e of enemies) {
+    if (!e.alive) continue;
+    const d = e.h.position.clone().sub(player.position).setY(0), L = d.length();
+    if (L < 2.9 && d.normalize().dot(fwd) > .25) {
+      const dmg = timeStop > 0 ? 30 : 20; e.hp -= dmg; e.flash = .15; sfx.hit(); sfx.clash();
+      sparks(e.h.position.clone().setY(1.3), timeStop > 0 ? 0x81d4fa : 0xffd180);
+      e.kb.copy(fwd).multiplyScalar(timeStop > 0 ? 2 : 6);
+      if (e.state === 'wind' && timeStop <= 0) { e.state = 'rec'; e.t = .6; } // كسر الهجوم
+      if (e.hp <= 0) killEnemy(e);
+    }
+  }
+}
+function killEnemy(e) {
+  e.alive = false; e.bar.style.display = 'none'; dissolve(e.h, 0xff8a65, 300); shake = .3;
+  if (enemies.every(x => !x.alive)) victory();
+}
+function updateEnemies(dt) {
+  const frozen = timeStop > 0;
+  for (const e of enemies) {
+    if (!e.alive) continue;
+    const u = e.h.userData;
+    e.flash = Math.max(0, e.flash - dt);
+    u.mats.shirt.emissive.setHex(e.flash > 0 ? 0xff3d00 : 0x000000);
+    if (combat) {
+      const sp = e.h.position.clone().setY(2.6).project(camera);
+      e.bar.style.display = sp.z < 1 ? 'block' : 'none';
+      e.bar.style.left = (sp.x * .5 + .5) * innerWidth + 'px'; e.bar.style.top = (-sp.y * .5 + .5) * innerHeight + 'px';
+      e.bar.firstChild.style.width = (e.hp / e.max * 100) + '%';
+    }
+    if (e.kb.lengthSq() > .01) { e.h.position.addScaledVector(e.kb, dt); e.kb.multiplyScalar(frozen ? 1 - dt * 6 : 1 - dt * 8); collide(e.h.position, .5); }
+    if (frozen || !combat) continue;
+    const d = player.position.clone().sub(e.h.position).setY(0), L = d.length(); d.normalize();
+    e.h.rotation.y = Math.atan2(d.x, d.z);
+    let speed = 0;
+    if (e.type === 'sword') {
+      if (e.state === 'idle') {
+        if (L > 1.9) { e.h.position.addScaledVector(d, 4.3 * dt); speed = 4.3; }
+        else { e.state = 'wind'; e.t = .6; u.busy = 1; }
+        e.cd -= dt;
+      } else if (e.state === 'wind') {
+        e.t -= dt; u.armR.rotation.x = THREE.MathUtils.lerp(u.armR.rotation.x, -2.7, dt * 10);
+        if (e.t <= 0) { u.armR.rotation.x = .4; sfx.swing(); if (L < 2.6) damagePlayer(14, e.h.position); e.state = 'rec'; e.t = .75; }
+      } else if (e.state === 'rec') { e.t -= dt; if (e.t <= 0) { e.state = 'idle'; u.busy = 0; } }
+    } else {
+      const side = new THREE.Vector3(-d.z, 0, d.x).multiplyScalar(e.strafe);
+      let mv = side.clone().multiplyScalar(.6);
+      if (L < 9) mv.addScaledVector(d, -1); else if (L > 17) mv.addScaledVector(d, 1);
+      if (mv.lengthSq() > .01) { mv.normalize(); e.h.position.addScaledVector(mv, 3.2 * dt); speed = 3.2; }
+      if (Math.random() < dt * .3) e.strafe *= -1;
+      e.cd -= dt; u.busy = 1; u.armL.rotation.x = -1.5; u.armR.rotation.x = e.cd < .7 ? -1.5 : -.3;
+      if (e.cd <= 0) { e.cd = rand(1.8, 2.6); const from = e.h.position.clone().setY(1.5).addScaledVector(d, .6); const lead = player.position.clone().setY(1.2); shootArrow(from, lead); }
+    }
+    collide(e.h.position, .5);
+    animHuman(e.h, speed, dt);
+  }
+  // الأسهم
+  for (let i = arrows.length - 1; i >= 0; i--) {
+    const a = arrows[i]; if (frozen) continue;
+    a.m.position.addScaledVector(a.vel, dt); a.life -= dt;
+    const pp = player.position.clone().setY(1.2);
+    if (a.m.position.distanceTo(pp) < .75) { damagePlayer(10, a.m.position); a.life = 0; }
+    if (a.life <= 0 || a.m.position.y < 0) { scene.remove(a.m); arrows.splice(i, 1); }
+  }
+}
+
+/* ================= تحديث اللاعب ================= */
+const tmpF = new THREE.Vector3(), tmpR = new THREE.Vector3();
+function updatePlayer(dt, inp) {
+  const u = player.userData; let speed = 0;
+  atkCd -= dt; dodgeCd -= dt; invuln -= dt;
+  if (mode === 'play') {
+    tmpF.set(-Math.sin(camYaw), 0, -Math.cos(camYaw)); tmpR.set(Math.cos(camYaw), 0, -Math.sin(camYaw));
+    const mv = tmpF.clone().multiplyScalar(inp.my).addScaledVector(tmpR, inp.mx);
+    if (combat) {
+      if (pressed.attack) playerAttack();
+      if (pressed.dodge && dodgeCd <= 0) { dodgeT = .28; dodgeCd = .65; invuln = .35; dodgeDir.copy(mv.lengthSq() > .01 ? mv.clone().normalize() : new THREE.Vector3(-Math.sin(player.rotation.y), 0, -Math.cos(player.rotation.y))); sfx.dash(); }
+      if (pressed.time && timeStop <= 0) {
+        if (energy >= 60) { energy -= 60; timeStop = 4; setFrozen(true); sfx.time(); }
+        else { tone(150, .2, 'square', .05); }
+      }
+    }
+    if (dodgeT > 0) { dodgeT -= dt; player.position.addScaledVector(dodgeDir, 17 * dt); speed = 8; player.rotation.y = Math.atan2(dodgeDir.x, dodgeDir.z); }
+    else if (mv.lengthSq() > .001) {
+      const s = (combat ? 6.2 : 5.5) * Math.min(1, mv.length());
+      player.position.addScaledVector(mv.normalize(), s * dt); speed = s;
+      if (atkT <= 0) { const ty = Math.atan2(mv.x, mv.z); let df = ty - player.rotation.y; df = Math.atan2(Math.sin(df), Math.cos(df)); player.rotation.y += df * Math.min(1, dt * 14); }
+    }
+    collide(player.position);
+  }
+  if (atkT > 0) { atkT -= dt; u.busy = 1; const p = 1 - atkT / .3; u.armR.rotation.x = -2.6 + p * 3.1; u.armR.rotation.z = -.4 + p * .8; }
+  else if (u.busy > 0 && atkT <= 0) { u.busy = 0; u.armR.rotation.z = 0; }
+  animHuman(player, speed, dt);
+  player.visible = !(invuln > 0 && dodgeT <= 0 && combat && Math.floor(performance.now() / 60) % 2 === 0);
+  if (combat) { energy = Math.min(100, energy + dt * (timeStop > 0 ? 0 : 9)); }
+  $('hp').firstChild.style.width = hp + '%'; $('en').firstChild.style.width = energy + '%';
+}
+
+/* ================= الكاميرا ================= */
+function updateCamera(dt, inp) {
+  if (mode === 'play') {
+    camYaw -= mouseDX * .0028 + inp.cx * 2.6 * dt;
+    camPitch = clamp(camPitch + mouseDY * .002 + inp.cy * 1.8 * dt, .05, 1.1);
+  }
+  mouseDX = mouseDY = 0;
+  camTarget.lerp(player.position.clone().setY(1.6), Math.min(1, dt * 8));
+  const off = new THREE.Vector3(Math.sin(camYaw) * Math.cos(camPitch), Math.sin(camPitch), Math.cos(camYaw) * Math.cos(camPitch)).multiplyScalar(camDist);
+  camera.position.copy(camTarget).add(off);
+  if (shake > 0) { shake -= dt; camera.position.add(new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).multiplyScalar(shake * .5)); }
+  camera.lookAt(camTarget);
+  sun.position.copy(player.position).add(new THREE.Vector3(30, 50, 20)); sun.target.position.copy(player.position);
+}
+
+/* ================= الحلقة الرئيسية ================= */
+const clock = new THREE.Clock();
+let started = false;
+function loop() {
+  requestAnimationFrame(loop);
+  const dt = Math.min(clock.getDelta(), .05);
+  const inp = pollInput();
+  if (mode === 'title' && inp.any && !started) { started = true; audio(); startGame(); }
+  const adv = pressed.interact || pressed.attack;
+  if (cardState && adv) advanceCard();
+  if (dlg) updateDialog(dt, adv);
+
+  // الإيقاف الزمني
+  if (timeStop > 0) { timeStop -= dt; if (timeStop <= 0) { setFrozen(false); sfx.unfreeze(); } }
+  const frozen = timeStop > 0 || worldFrozen;
+
+  updatePlayer(dt, inp);
+  for (const h of [khaled, ...villagers, ...enemies.filter(e => e.alive && !combat).map(e => e.h)]) { if (!h.visible) continue; const s = moveNPC(h, dt); if (!(h === khaled && khaled.userData.busy)) animHuman(h, s, dt); }
+  updateEnemies(dt);
+  if (!frozen) updateLeaves(dt);
+  for (let i = fx.length - 1; i >= 0; i--) if (!fx[i].update(dt)) fx.splice(i, 1);
+
+  // التفاعل
+  if (interactable && mode === 'play' && interactable.obj.visible && interactable.obj.position.distanceTo(player.position) < 3.2) {
+    $('prompt').style.display = 'block'; $('prompt').textContent = (gpConnected ? 'Ⓐ ' : '[E] ') + interactable.label;
+    if (pressed.interact) { const r = interactable.res; interactable = null; $('prompt').style.display = 'none'; r(); }
+  } else $('prompt').style.display = 'none';
+  for (let i = waiters.length - 1; i >= 0; i--) if (waiters[i].check()) { waiters[i].res(); waiters.splice(i, 1); }
+
+  marker.material.opacity = .18 + Math.sin(performance.now() / 300) * .08;
+  ringLight.intensity = THREE.MathUtils.lerp(ringLight.intensity, ringGlow, dt * 4);
+  ringMat.emissiveIntensity = .6 + ringLight.intensity;
+  updateCamera(dt, inp);
+  renderer.render(scene, camera);
+}
+let ringGlow = 0, worldFrozen = false;
+
+/* ================= القصة ================= */
+async function startGame() {
+  $('title').style.transition = 'opacity 1s'; $('title').style.opacity = 0; await wait(1); $('title').style.display = 'none';
+  mode = 'cards';
+  await cards([
+    'كان الصباح يشبه الأمس…\nوالأمس يشبه الذي سبقه.',
+    'منبّه مزعج… طريق مكرر… شاشة… مهام لا تنتهي.\nملل، رتابة… حياة بلا معنى.',
+    'في المساء، وقعت عينه على خبر:\n«البحث مستمر عن الفتاة المختفية منذ أيام…»',
+    'ثم… إعلان غريب:\n«هل تشعر بالملل؟ هل تريد أن تغيّر حياتك؟\nانضم إلى التحدي الذي سيقلب واقعك رأسًا على عقب!»',
+    'مبنى قديم بعيد عن المدينة… شاشات تعرض خواتم متوهجة…\nورجل بمعطف أسود طويل:\n«أنت هنا لتبدأ حياتك الجديدة.»',
+    '«اختر عمرك، اختر جنسك. ابدأ حياتك كما تريد.»\n\nالعمر: 18   ·   الجنس: رجل',
+    '«القرار اتخذته. الآن، استعد لما هو آتٍ.»',
+  ]);
+  // السقوط في العالم
+  mode = 'cut'; cine(true);
+  spawnVillagers();
+  player.position.set(0, 0, 0); player.rotation.y = Math.PI; camYaw = .3; camPitch = .55; camDist = 9;
+  camTarget.set(0, 1.6, 0);
+  tone(200, 1.5, 'sine', .15, 4); noise(.6, .25, 200);
+  shake = .6;
+  await fade(0, 2);
+  await say([
+    { t: 'سقط راضي بقوة على بساط من العشب الأخضر الكثيف… الهواء نقي، ورائحة الأرض الندية تملأ المكان.' },
+    { t: 'عشرات الأشخاص تجمّعوا حوله… ينظرون إليه بصمت، وكأنهم شهدوا ولادة نجم من العدم.' },
+    { n: 'راضي', t: 'أين أنا؟' },
+  ]);
+  // انصراف الناس
+  villagers.forEach((v, i) => setTimeout(() => {
+    const a = Math.atan2(v.position.z, v.position.x) + rand(-.3, .3);
+    v.userData.speed = rand(1.6, 2.4); v.userData.target = new THREE.Vector3(Math.cos(a) * 45, 0, Math.sin(a) * 45);
+    v.userData.onArrive = () => { v.visible = false; };
+  }, i * 120));
+  await wait(2.5);
+  await say([{ t: 'لم يُجبه أحد… بدأوا ينصرفون واحدًا تلو الآخر، وكأنهم اعتادوا على قدوم الغرباء من العدم.' }]);
+  khaled.visible = true; khaled.position.set(-1.2, 0, 2.2); khaled.lookAt(player.position);
+  await wait(.4);
+  await say([{ n: '؟؟؟', t: 'مرحبًا بك… يبدو أنك جديد هنا. ما رأيك أن نبدأ بجولة؟' }]);
+  cine(false); camDist = 7; mode = 'play';
+  $('hud').classList.add('on'); $('help').style.display = 'block';
+  objective('تحدّث إلى الشاب الغريب');
+  await setInteract(khaled, 'تحدّث');
+  mode = 'cut'; cine(true); khaled.lookAt(player.position.x, 0, player.position.z);
+  player.lookAt(khaled.position.x, 0, khaled.position.z);
+  await say([
+    { n: 'الشاب', t: 'مرحبًا… اسمي خالد. تعالَ معي، سأرشدك في هذه اللعبة. ما اسمك؟' },
+    { n: 'راضي', t: 'أ… أنا راضي. ولكن… لماذا انصرف الناس من حولي فجأة؟ ولماذا أنت من يرشدني؟' },
+    { n: 'خالد', t: 'هناك أشياء كثيرة يجب أن تعرفها… لكن، لا أعلم لماذا، أشعر أني أستطيع الوثوق بك.' },
+  ]);
+  ringGlow = 4; sfx.magic(); await wait(1.2);
+  await say([{ t: 'ظهرت علامة غريبة على الخاتم… ثم اختفت بسرعة، كأنها لم تكن.' }]);
+  ringGlow = 0;
+  await say([{ n: 'خالد', t: 'هل هذا…؟  تعالَ معي بسرعة!' }]);
+  // خالد يجري نحو الغابة
+  khaled.userData.speed = 5; khaled.userData.target = new THREE.Vector3(0, 0, -45);
+  khaled.userData.onArrive = () => { khaled.userData.speed = 4; khaled.userData.target = new THREE.Vector3(1, 0, -70); };
+  cine(false); mode = 'play'; objective('اتبع خالد إلى أعماق الغابة');
+  marker.visible = true; marker.position.set(1, 20, -70);
+  await until(() => player.position.distanceTo(new THREE.Vector3(1, 0, -70)) < 6 && !khaled.userData.target);
+  marker.visible = false; objective('');
+  mode = 'cut'; cine(true);
+  khaled.lookAt(player.position.x, 0, player.position.z); player.lookAt(khaled.position.x, 0, khaled.position.z);
+  await say([
+    { n: 'راضي', t: 'ما الأمر؟ لماذا تبدو خائفًا هكذا؟' },
+    { n: 'خالد', t: 'إن كان ظني في محله… فإن الخاتم الذي تحمله… من أخطر ما يوجد في هذه اللعبة. إن رآه أحد الحراس معك… فسوف يقبضون عليك فورًا.' },
+    { n: 'راضي', t: 'حراس؟! ألست هذه لعبة؟ ألسنا أحرارًا نفعل ما نشاء؟' },
+    { n: 'خالد', t: 'لعبة؟… هذا ما قيل لنا جميعًا في البداية. دخلتُ منذ عشر سنوات… أبحث عن الحرية… لكن كل ما وجدته كان وهمًا.' },
+    { n: 'راضي', t: 'إذًا… كيف نخرج من هذه اللعبة؟' },
+    { n: 'خالد', t: 'اصمت! لا تنطق بهذه الكلمات هنا مرة أخرى… إن سمعك أحد الحراس فسيأخذونك إلى مكان لا يعود منه أحد.' },
+    { n: 'خالد', t: 'سأخبرك بكل شيء… لكن قبل ذلك، يجب أن تعرف من أنا.' },
+    { n: 'خالد', t: 'أنا… في الحقيقة…' },
+  ]);
+  await wait(.8);
+  await say([
+    { n: 'خالد', t: 'أنا فتاة.' },
+    { n: 'خالد', t: 'أنا من منطقة تُدعى… ليل القمر. كنت أشعر دائمًا أنني مقيّدة… فقط لأنني فتاة. حتى رأيت إعلانًا… فدخلت.' },
+    { n: 'راضي', t: 'ليل القمر؟!… هذه هي المنطقة التي أعيش فيها! …لحظة. هل تتذكر تاريخ دخولك إلى اللعبة؟' },
+    { n: 'خالد', t: 'لن أنساه أبدًا… يوم الأحد، السابع عشر من شوال، سنة 1414.' },
+    { n: 'راضي', t: 'هذا التاريخ… كان أمس!  لم يمر سوى عشر ساعات تقريبًا منذ أن دخلتُ.' },
+  ]);
+  shake = .4; sfx.magic();
+  await bigText('الساعة… بسنة داخل اللعبة!', 2.6);
+  await say([{ n: 'خالد', t: 'إذًا هذا هو اللغز…!  — انتظر… انزل أرضًا! نحن مُراقَبون.' }]);
+  // الكمين
+  const g1 = spawnGuard('sword', -6, -88), g2 = spawnGuard('bow', 8, -92);
+  g1.h.userData.speed = 5; g1.h.userData.target = new THREE.Vector3(-1, 0, -74);
+  g2.h.userData.speed = 3; g2.h.userData.target = new THREE.Vector3(6, 0, -84);
+  await wait(1.6);
+  khaledShield.visible = khaledSpear.visible = true; sfx.magic();
+  await say([
+    { n: 'خالد', t: 'اختبئ!  …خذ هذا الخاتم، جرّبه… بسرعة!' },
+    { n: 'حارس', t: 'سلّم نفسك. لقد تجاوزتما حدودًا لا يُسمح بالوصول إليها.' },
+    { n: 'خالد', t: 'لن أستسلم.' },
+  ]);
+  await fade(1, .8);
+  sfx.clash(); await wait(.5); sfx.clash(); noise(.3, .2, 500); await wait(.4);
+  mode = 'cards';
+  await cards([
+    'دفعه خالد بقوة نحو حفرة قريبة…\nصليل سيوف… اندفاع… ارتطام…',
+    '«ستقابل العجوز عند جبل…!»\n\nلكن صوته تلاشى وسط ضجيج المعركة…\nلم يسمع راضي اسم الجبل بوضوح.',
+  ]);
+  mode = 'cut';
+  player.position.copy(PIT).add(new THREE.Vector3(-1.5, 0, 1.5));
+  khaled.position.set(1, 0, -78); khaledShield.visible = khaledSpear.visible = false;
+  khaled.userData.busy = 1; khaled.userData.legL.rotation.x = -1.4; khaled.userData.legR.rotation.x = .2;
+  khaled.position.y = -.4;
+  g1.h.position.set(-1, 0, -80.5); g2.h.position.set(5, 0, -86);
+  g1.h.lookAt(khaled.position.x, 0, khaled.position.z); g2.h.lookAt(khaled.position.x, 0, khaled.position.z);
+  player.lookAt(khaled.position.x, 0, khaled.position.z);
+  camYaw = Math.atan2(player.position.x - khaled.position.x, player.position.z - khaled.position.z) ;
+  camPitch = .3; camDist = 6;
+  await fade(0, 1.2);
+  await say([{ n: 'راضي', t: 'خالد…!' }]);
+  dissolve(khaled, 0xffe082, 600); sfx.magic();
+  await wait(2.2);
+  await say([
+    { t: 'كان جسده يتلاشى ببطء… كأنه يتحول إلى غبار من الضوء.' },
+    { n: 'حارس', t: 'انتهينا من واحد… بقي الآخر.' },
+  ]);
+  // لحظة التحول
+  shake = 1.2; tone(60, 2, 'sawtooth', .12, .5); ringGlow = 6;
+  await say([{ t: 'بدأ جسده يرتجف… أنفاسه تتسارع… وكأن شيئًا داخله ينفجر.' }]);
+  worldFrozen = true; timeStop = 3; setFrozen(true); sfx.time();
+  blade.visible = true; awakened = true;
+  await bigText('⏳ توقف الزمن', 2.4);
+  await say([{ t: 'أوراق الشجر… الطيور… حتى حركة الهواء… كل شيء تجمّد. قوة لم يفهمها بعد… بدأت تستيقظ داخله.' }]);
+  worldFrozen = false; ringGlow = 1.2;
+  await startCombat();
+}
+async function startCombat() {
+  hp = 100; energy = 100; combat = true;
+  cine(false); camDist = 7.5; mode = 'play';
+  objective('انجُ من الحارسين — استخدم قوة الزمن');
+  timeStop = 3.5; setFrozen(true);
+  await bigText(isTouch ? 'اضغط ⏳ لإيقاف الزمن · ⚔️ للهجوم · 💨 للتفادي' : gpConnected ? 'Ⓨ لإيقاف الزمن · Ⓧ للهجوم · Ⓑ للتفادي' : 'Q لإيقاف الزمن · نقرة للهجوم · Space للتفادي', 3);
+}
+let downBusy = false;
+async function playerDown() {
+  if (downBusy) return; downBusy = true;
+  combat = false; mode = 'cut'; timeStop = 0; setFrozen(false);
+  await bigText('سقط راضي…', 1.8);
+  await fade(1, 1);
+  arrows.forEach(a => scene.remove(a.m)); arrows.length = 0;
+  enemies.forEach(e => { scene.remove(e.h); e.bar.remove(); }); enemies.length = 0;
+  spawnGuard('sword', -2, -82); spawnGuard('bow', 8, -88);
+  player.position.copy(PIT).add(new THREE.Vector3(-1.5, 0, 1.5)); player.visible = true;
+  await fade(0, 1); downBusy = false;
+  await startCombat();
+}
+async function victory() {
+  combat = false; objective('');
+  await wait(1.5); mode = 'cut'; timeStop = 0; setFrozen(false);
+  await bigText('انتصار', 2);
+  await fade(1, 1.5);
+  mode = 'cards'; $('hud').classList.remove('on'); $('help').style.display = 'none'; cine(false);
+  await cards([
+    'فتح راضي عينيه ببطء… كوخ قديم، ورائحة الخشب والرطوبة.\nوأمامه رجل مسنّ يراقبه بهدوء.',
+    '«أنا صديق لخالد… شعرت بشيء غريب، كأن خطرًا قد حدث. لكنني لم أجد سواك… وهذا الخاتم بجانبك.»',
+    '«من يموت هنا… جسده يتلاشى، ولا نعرف إلى أين يذهب.»',
+    '«كان خالد يحمل معه شارة غريبة ويقول: عندما أُريها لذلك العجوز… سيفرح.»\n\nأخذ راضي الشارة.',
+    '«عليك أن تغادر المدينة فورًا… على الأرجح أنت من قتل الحارسين.\nقتل حارسين… ليس أمرًا عاديًا.»',
+    'أزاح الرجل صخرة كبيرة… فظهر باب مخفي.\n«انزل من هنا… حتى تصل إلى مدينة تحت الأرض. هناك ستجد طريقك.»',
+    'وقف راضي أمام الباب المظلم…\nبين يديه الشارة… وعلى إصبعه الخاتم…\nخلفه ماضٍ لا يمكن العودة إليه،\nوأمامه طريق لا يعرف نهايته.',
+    'نهاية الفصل الأول\n\n— يتبع —\nالفصل الثاني: مدينة تحت الأرض',
+  ]);
+  location.reload();
+}
+
+loop();
+</script>
+</body>
+</html>
